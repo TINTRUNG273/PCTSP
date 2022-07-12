@@ -291,10 +291,10 @@ here:
                 change = 1;
                 double cur_distance = tour_length(p, size_tour, tour);
                 printf("Swap changed = %lf\n", cur_distance);
-                if ((min_distance - cur_distance) > EPSILON) {
-                    min_distance = cur_distance;
-                    write_tour_data(tourFileName, size_tour, tour);
-                }
+                // if ((min_distance - cur_distance) > EPSILON) {
+                //     min_distance = cur_distance;
+                //     write_tour_data(tourFileName, size_tour, tour);
+                // }
                 goto here;
                 return;
             }
@@ -353,10 +353,10 @@ here:
             }
         }
     }
-    if ((min_distance - cur_distance) > EPSILON) {
-        min_distance = cur_distance;
-        write_tour_data(tourFileName, size_tour, tour);
-    }
+    // if ((min_distance - cur_distance) > EPSILON) {
+    //     min_distance = cur_distance;
+    //     write_tour_data(tourFileName, size_tour, tour);
+    // }
 }
 
 void TwoOpt(point p[], int n, int tour[], int m, int prec[]) {
@@ -414,10 +414,10 @@ here:
         printf("Changed by Two-Opt = %lf\n", distance_tour);
         cur_distance = distance_tour;
         change++;
-        if ((min_distance - cur_distance) > EPSILON) {
-            min_distance = cur_distance;
-            write_tour_data(tourFileName, n, tour);
-        }
+        // if ((min_distance - cur_distance) > EPSILON) {
+        //     min_distance = cur_distance;
+        //     write_tour_data(tourFileName, n, tour);
+        // }
         goto here;
         return;
     }
@@ -478,10 +478,10 @@ here:
             printf("Changed by orOpt1 = %lf\n", distance_tour);
             cur_distance = distance_tour;
             change++;
-            if ((min_distance - cur_distance) > EPSILON) {
-                min_distance = cur_distance;
-                write_tour_data(tourFileName, n, tour);
-            }
+            // if ((min_distance - cur_distance) > EPSILON) {
+            //     min_distance = cur_distance;
+            //     write_tour_data(tourFileName, n, tour);
+            // }
             goto here;
             return;
         }
@@ -551,10 +551,10 @@ here:
             printf("Changed by orOpt2 = %lf\n", distance_tour);
             cur_distance = distance_tour;
             change++;
-            if ((min_distance - cur_distance) > EPSILON) {
-                min_distance = cur_distance;
-                write_tour_data(tourFileName, n, tour);
-            }
+            // if ((min_distance - cur_distance) > EPSILON) {
+            //     min_distance = cur_distance;
+            //     write_tour_data(tourFileName, n, tour);
+            // }
             goto here;
             return;
         }
@@ -663,10 +663,10 @@ here:
             printf("Changed by orOpt3 = %lf\n", distance_tour);
             cur_distance = distance_tour;
             change++;
-            if ((min_distance - cur_distance) > EPSILON) {
-                min_distance = cur_distance;
-                write_tour_data(tourFileName, n, tour);
-            }
+            // if ((min_distance - cur_distance) > EPSILON) {
+            //     min_distance = cur_distance;
+            //     write_tour_data(tourFileName, n, tour);
+            // }
             goto here;
             return;
         }
@@ -712,7 +712,7 @@ void solve(point p[], int tour[], int size_tour, int prec[], int number_prec) {
         local_search(p, tour, size_tour, prec, number_prec);
 
         cur_distance = tour_length(p, size_tour, tour);
-        if (cur_distance < best_distance) {
+        if ((best_distance - cur_distance) > EPSILON) {
             printf("%d - Found improvement %.2lf\n", iter, cur_distance);
             best_distance = cur_distance;
             min_distance = best_distance;
@@ -720,7 +720,7 @@ void solve(point p[], int tour[], int size_tour, int prec[], int number_prec) {
         }
     }
 
-    printf("Min: %.2lf\n", best_distance);
+    printf("Min: %.2lf\n", min_distance);
     printf("Done Local Search!\n");
 }
 
