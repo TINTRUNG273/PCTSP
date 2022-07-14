@@ -512,6 +512,54 @@ void orOpt1(struct point p[MAX_N],int n,int tour[MAX_N],int m, int prec[MAX_N]){
 
 // ここから下が大体やったところ
 
+void orOpt2(struct point p[MAX_N],int n,int tour[MAX_N],int m, int prec[MAX_N]){
+  int a,b,c,d,e;
+  int i0, i, i1, j, j1, g;
+  int tmp, count=1;
+  double l1, l2 ,l3, l4, l5, l6;
+  
+	while(count>0){
+		count=0;
+		for(i=0;i<n;i++){
+		  if (check_prec(prec, tour[i] , m) > 0)  {
+		    continue;
+		  }
+			i0 = i - 1;
+			if(i0 < 0) i0 = n - 1;
+			i1 = (i + 1) % n;
+			
+			for(j=i;j<n;j++){
+			  if (check_prec(prec, tour[i] , m) > 0) continue;
+			  j1 = (j + 1) % n;
+			  a = tour[i0]; 
+        b = tour[i1];
+        c = tour[i]; 
+        d = tour[j]; 
+        e = tour[j1]; 
+				if(j != i && j1 != i ){
+				  l1 = dist(p[a],p[c]);
+				  l2 = dist(p[c],p[b]);
+				  l3 = dist(p[d],p[e]);
+				  l4 = dist(p[a],p[b]);
+			    l5 = dist(p[d],p[c]);
+				  l6 = dist(p[c],p[e]);
+
+				  if(l1 + l2 + l3 > l4 + l5 + l6){
+					  count++;
+					  tmp = tour[i];
+					  for(g = i; g < j; g++) tour[g] = tour[g+1];
+					  tour[j] = tmp;    				    
+					}
+				}
+		  }		
+	  }
+//		sprintf(tourFileName,  "tour%08d.dat",++num);
+//		write_tour_data(tourFileName,n,tour);
+		printf("orOpt1 changed = %lf\n", tour_length(p,n,tour));
+		
+  }
+}
+
 void orOpt_k(struct point p[MAX_N],int n,int tour[MAX_N],int m, int prec[MAX_N], int k){
   int i, j, l;
   int a, b, c, d, e, f;
@@ -519,32 +567,52 @@ void orOpt_k(struct point p[MAX_N],int n,int tour[MAX_N],int m, int prec[MAX_N],
   double tourMin=INF, curMin=INF, distMin=INF;
   double dist1,dist2;
   int changed=0, mode;
-  int prec_s, prec_e, prec_num;
+  int prec_s, prec_e, prec_num, prec_mode, prec_1, prec_2;
   int max_n=n;
-  int curTour[MAX_N];
-  for(i=0;i<n;i++)curTour[i]=tour[i];
-  tourMin=tour_length(p,n,tour);
 
 /**/
   //ついでに
   int prec_tour[MAX_N];
-  for(i=0;i<n;i++){
+  for(l=0;l<n;l++){
     for(j=0;j<m;j++){
-      if(curTour[i]==prec[j]){
-        prec_tour[i]=prec[j];
+      if(tour[l]==prec[j]){
+        prec_tour[l]=j;
         break;
       }else{
-        prec_tour[i]=-1;
+        prec_tour[l]=-1;
       }
     }
   }
-/**/
 
-  for(i=0;i<max_n;i++){               // 比較するk近傍の始点
+
+//------
+/*
+  prec_1=check_prec_tx(k,prec_tour,n,m,prec,1);         // ここら辺まとめられるかも
+  prec_2=check_prec_tx(k,prec_tour,n,m,prec,2);
+  if(prec_1 == m-1){
+    if(prec_2 == 0){
+      prec_mode=0;      // 通常の順番
+    }else{
+      prec_mode=1;      // 逆順
+    }
+  }else{
+    if(prec_1 < prec_2){
+      prec_mode=0;
+    }else{
+      prec_mode=1;
+    }
+  }
+*/
+/**/
+//-------
+
+
+//  for(i=0;i<max_n;i++){
+  for(i=0;i<n;i++){               // 比較するk近傍の始点
 //    prec_num=check_prec_num(k,tour,i,m,prec);         // 塊の中のprecの数
     changed=0;
     prec_num=0;
-    for(j=i;j<i+k;j++){
+    for(j=i;j<i+k;j++){                                 // 塊の中のprecの数
       if(prec_tour[j]!=-1){
         prec_num++;
         prec_e=prec_tour[j];
@@ -568,7 +636,7 @@ void orOpt_k(struct point p[MAX_N],int n,int tour[MAX_N],int m, int prec[MAX_N],
     distMin=INF;
     for(j=i+k;j+1<n+i;j++){         // 間に入れるところ(最初を比較する塊の次からにする)
       if(mode==1){                  // 入れるところが制限に引っかかるなら引っかからないところまで休止
-        if(curTour[j%n]==prec[(prec_e+1)%m]){
+        if(tour[j%n]==prec[(prec_e+1)%m]){
           mode=3;
           continue;
         }
@@ -581,11 +649,11 @@ void orOpt_k(struct point p[MAX_N],int n,int tour[MAX_N],int m, int prec[MAX_N],
           continue;
         }
       }
-      a=curTour[j%n];        b=curTour[(j+1)%n];          // 比較するところ
-      c=curTour[(i-1+n)%n];  d=curTour[i];                // 塊の始点
-      e=curTour[(i+k-1)%n];  f=curTour[(i+k)%n];          // 塊の終点
+      a=tour[j%n];        b=tour[(j+1)%n];          // 比較するところ
+      c=tour[(i-1+n)%n];  d=tour[i];                // 塊の始点
+      e=tour[(i+k-1)%n];  f=tour[(i+k)%n];          // 塊の終点
       dist1=dist(p[a],p[b])+dist(p[c],p[d])+dist(p[e],p[f]);        // 変える前
-      dist2=dist(p[a],p[e])+dist(p[b],p[d])+dist(p[c],p[f]);        // 変えた後
+      dist2=dist(p[a],p[d])+dist(p[b],p[e])+dist(p[c],p[f]);        // 変えた後
 
       if(dist1>dist2){
         if(dist2-dist1<distMin){
@@ -597,15 +665,23 @@ void orOpt_k(struct point p[MAX_N],int n,int tour[MAX_N],int m, int prec[MAX_N],
     }
 
     if(changed){
-      printf("i:%d, j:%d\n", i, curj);
-      change_tour(n, curTour, k, curi, curj, p);
-      if(tour_length(p,n,curTour)<tourMin){
-        tourMin=tour_length(p,n,curTour);
-        for(j=0;j<n;j++)tour[j]=curTour[j];
-        show_array2(n,tour);
-      }
+//      printf("i:%d, j:%d\n", i, curj);
+      change_tour(n, tour, k, curi, curj, p);
+//      show_array(tour,n);
       printf("len:%lf\n",tour_length(p,n,tour));
+      
+//      printf("len:%lf\n",tour_length(p,n,tour));
 //      max_n-=k;
+      for(l=0;l<n;l++){
+        for(j=0;j<m;j++){
+          if(tour[l]==prec[j]){
+            prec_tour[l]=j;
+            break;
+          }else{
+            prec_tour[l]=-1;
+          }
+        }
+      }
     }
   }
 }
@@ -613,16 +689,36 @@ void orOpt_k(struct point p[MAX_N],int n,int tour[MAX_N],int m, int prec[MAX_N],
 void change_tour(int n, int tour[MAX_N], int k, int curi, int curj, struct point p[MAX_N]){
   int i, j, s=0;
   int curTour[MAX_N];
-  for(i=0;i<n;i++){               // curTourにOrOptで変えたtourを入れる
-    if(curi<=i && i<curi+k){
-    }else{
-      curTour[s]=tour[(curj+1+i)%n];
-      s++;
+  int mode;
+  if(curi+k>=n){
+    mode=1;
+  }else{
+    mode=0;
+  }
+  if(mode==0){
+    for(i=0;i<n;i++){               // curTourにOrOptで変えたtourを入れる
+      if(curi<=(curj+1+i)%n && (curj+1+i)%n<curi+k){
+      }else{
+        curTour[s]=tour[(curj+1+i)%n];
+        s++;
+      }
+    }
+    for(i=0;i<k;i++){
+      curTour[n-k+i]=tour[curi+i];
+    }
+  }else if(mode==1){
+    for(i=0;i<n;i++){               // curTourにOrOptで変えたtourを入れる
+      if((curi+k)%n<=(curj+1+i)%n && (curj+1+i)%n<curi){
+        curTour[s]=tour[(curj+1+i)%n];
+        s++;
+      }else{
+      }
+    }
+    for(i=0;i<k;i++){
+      curTour[n-k+i]=tour[curi+i];
     }
   }
-  for(i=0;i<k;i++){
-    curTour[n-k+i]=tour[curi+i];
-  }
+  
   for(i=0;i<n;i++){
     tour[i]=curTour[i];
   }
@@ -666,6 +762,16 @@ int check_prec_x(int k, int tour[MAX_N], int n, int i, int m, int prec[MAX_N], i
   }
   return -1;
 }
+int check_prec_tx(int k, int prec_tour[MAX_N], int n, int m, int prec[MAX_N], int x){
+  int p, num=0;
+  for(p=0;p<k;p++){       // x番目のprec_tourの値 を返す
+    if(prec_tour[p]!=-1){
+      num++;
+      if(num==x) return prec_tour[p];
+    }
+  }
+  return -1;
+}
 
 int check_prec2(int value, int m, int prec[MAX_N]){
   int i;
@@ -690,7 +796,7 @@ int main(int argc, char *argv[]) {
   struct point p[MAX_N];   // 各点の座標を表す配列 
   int tour[MAX_N];   // 巡回路を表現する配列
   int prec[MAX_N];   // 順序制約を表現する配列
-  int i,j;
+  int i,j,k;
 
   if(argc != 2) {
     fprintf(stderr,"Usage: %s <tsp_filename>\n",argv[0]);
@@ -705,7 +811,7 @@ int main(int argc, char *argv[]) {
 
   // 最近近傍法による巡回路構築
   ci(p,n,tour,m,prec);
-  show_array2(n,tour);
+//  show_array2(n,tour);
   /*
   for(i = 0; i < 100; i++){
     printf("i = %2d : \n",i);
@@ -720,8 +826,10 @@ int main(int argc, char *argv[]) {
   //ThreeOpt(p,n,tour,m,prec);
 //  orOpt1(p,n,tour,m,prec); 
   //TwoOpt(p,n,tour,m,prec);
-
-  orOpt_k(p,n,tour,m,prec,4);
+//  show_array(tour,n);
+  for(k=5;k>0;k--){
+    orOpt_k(p,n,tour,m,prec,k);
+  }
   // ファイルに出力
   write_tour_data("tour1.dat",n,tour);
   printf("%lf\n",tour_length(p,n,tour)); // 巡回路tourの長さ
