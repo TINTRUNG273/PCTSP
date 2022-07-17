@@ -1,4 +1,5 @@
 ./run
+./debug
 */*.dat
 */*.dSYM
 *.png

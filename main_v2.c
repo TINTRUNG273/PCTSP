@@ -732,20 +732,21 @@ int main(int argc, char *argv[]) {
     int prec[MAX_N];  // 順序制約を表現する配列
     int i, j;
 
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s <tsp_filename> (max_iter)\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
+    // if (argc < 2) {
+    //     fprintf(stderr, "Usage: %s <tsp_filename> (max_iter)\n", argv[0]);
+    //     exit(EXIT_FAILURE);
+    // }
 
     // ----------------------------------------------------------------
+    max_iter = 100;
     if (argc >= 3) {
-        max_iter = 100;
         max_iter = atoi(argv[2]);
     }
     //-----------------------------------------------------------------
 
     // 点の数と各点の座標を1番目のコマンドライン引数で指定されたファイルから読み込む
-    read_tsp_data(argv[1], p, &n, prec, &m);
+    // read_tsp_data(argv[1], p, &n, prec, &m);
+    read_tsp_data("data/rd100.tsp", p, &n, prec, &m);
 
     solve(p, tour, n, prec, m);
 
