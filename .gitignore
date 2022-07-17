@@ -1,5 +1,5 @@
 **/run
 **/debug
 */*.dat
-*/*.dSYM
+**/*.dSYM
 *.png
