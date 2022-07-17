@@ -1,5 +1,4 @@
-*/*
-!*.c
-!*.cpp
-!./data/*
-!*.png
+./run
+*/*.dat
+*/*.dSYM
+*.png
