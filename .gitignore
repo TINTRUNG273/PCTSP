@@ -1,3 +1,5 @@
-./run
-*/*.dat
-*/*.dSYM
+*/*
+!*.c
+!*.cpp
+!./data/*
+!*.png
