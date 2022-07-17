@@ -179,8 +179,8 @@ int rand_comparison(const void *a, const void *b) {
 
 // クイックソート関数でシャッフル
 // 参考文献：https://monozukuri-c.com/langc-funclist-qsort/
-void shuffle(void *base, size_t nmemb, size_t size) {
-    qsort(base, nmemb, size, rand_comparison);
+void shuffle(int *base, size_t nmemb, size_t size) {
+    qsort(base, nmemb, size, rand_comparison);  // Exception has occurred
 }
 
 // get substring from string s from position start to position end
@@ -316,6 +316,8 @@ void swap_points(struct point p[], int n, int tour[]) {
         index_points[i] = i;
     }
 
+here_swap_points:
+
     shuffle(index_points, n, sizeof(int));
 
     for (int i = 0; i < n; ++i) {
@@ -327,6 +329,13 @@ void swap_points(struct point p[], int n, int tour[]) {
             if (flags[tour[index_i]] || flags[tour[index_j]]) continue;
 
             if (index_i > index_j) swap(&index_i, &index_j);
+            // a, b, c, d, e, f, g, h => a, b, d, c, e, f, g
+            // bc  + de => bd  + ce swap(c, d) 2 node lieenf keef
+
+            // a, b, c, d, e, f, g, h
+            // a, b, f, d, e, c, g, h -> swap(c, f) 2 điểm không liền kề
+
+            //  bc + cd + ef + fg =>  bf + fd + ec + cg
 
             delta = 0.0;
             int pre_i = tour[index_i - 1];
@@ -358,7 +367,8 @@ void swap_points(struct point p[], int n, int tour[]) {
                 change = 1;
                 double cur_distance = tour_length(p, n, tour);
                 printf("Swap changed = %lf\n", cur_distance);
-                swap_points(p, n, tour);
+                // swap_points(p, n, tour);
+                goto here_swap_points;
                 return;
             }
         }
@@ -367,15 +377,17 @@ void swap_points(struct point p[], int n, int tour[]) {
 
 void relocate(struct point p[], int n, int tour[]) {
     tour[n] = tour[0];
-    int index_points[n];
     int index_i, index_j;
-    double delta, cur_distance;
+    double delta;
+    int index_points[n];
     // show_array(tour, size_tour + 1);
     // printf("Distance tour start swap = %lf\n", tour_length(p, size_tour, tour));
 
     for (int i = 0; i < n; ++i) {
         index_points[i] = i;
     }
+
+here_relocate:
 
     shuffle(index_points, n, sizeof(int));
 
@@ -388,6 +400,8 @@ void relocate(struct point p[], int n, int tour[]) {
             index_j = index_points[j];
             if (index_j == index_i || index_j == (index_i - 1)) continue;
 
+            // a , b, c, d, e
+            // a , c, d, b, e
             delta = 0.0;
             int pre_i = tour[index_i - 1];
             int cur_i = tour[index_i];
@@ -405,10 +419,11 @@ void relocate(struct point p[], int n, int tour[]) {
                 if (index_i < index_j) index_j--;
                 insert(tour, &len, index_j + 1, cur_i);
                 change = 1;
-                cur_distance = tour_length(p, n, tour);
+                double cur_distance = tour_length(p, n, tour);
                 printf("Relocate changed = %lf\n", cur_distance);
                 // show_array(tour, size_tour + 1);
-                relocate(p, n, tour);
+                // relocate(p, n, tour);
+                goto here_relocate;
                 return;
             }
         }
@@ -960,6 +975,19 @@ void orOpt_k(struct point p[MAX_N], int n, int tour[MAX_N], int m, int prec[MAX_
 void local_search(struct point p[MAX_N], int n, int tour[MAX_N], int m, int prec[MAX_N]) {
     change = 1;
     while (change) {
+        // printf("Relocate!\n");
+        // relocate(p, n, tour);
+        // change = 0;
+        // printf("Swap!\n");
+        // swap_points(p, n, tour);
+        // printf("Or-Opt1!\n");
+        // OrOpt1(p, n, tour, m, prec);
+        // printf("Or-Opt2!\n");
+        // OrOpt2(p, n, tour, m, prec);
+        // printf("Or-Opt3!\n");
+        // OrOpt3(p, n, tour, m, prec);
+        // printf("2-Opt!\n");
+        // TwoOpt(p, n, tour, m, prec);
         if (tour_length(p, n, tour) < 100000) {
             printf("Relocate!\n");
             relocate(p, n, tour);
@@ -1039,6 +1067,7 @@ int main(int argc, char *argv[]) {
 
     // 点の数と各点の座標を1番目のコマンドライン引数で指定されたファイルから読み込む
     read_tsp_data(argv[1], p, &n, prec, &m);
+    // read_tsp_data("data/tg2701.tsp", p, &n, prec, &m);
 
     max_i = 100;
     solve(p, n, tour, m, prec);
