@@ -725,7 +725,7 @@ void call(int f_i, point p[], int tour[], int size_tour, int prec[], int number_
             break;
         case 4:
             printf("Or-Opt3!\n");
-            OrOpt3(p, size_tour, tour, number_prec, prec);
+            // OrOpt3(p, size_tour, tour, number_prec, prec);
             break;
         default:
             printf("Relocate!\n");

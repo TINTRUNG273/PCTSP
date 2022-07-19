@@ -3,3 +3,5 @@
 **/*.dat
 **/*.dSYM
 **/*.png
+**/**/check*
+**/.DS_Store
