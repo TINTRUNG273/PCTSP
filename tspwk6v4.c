@@ -1069,7 +1069,7 @@ int main(int argc, char *argv[]) {
     read_tsp_data(argv[1], p, &n, prec, &m);
     // read_tsp_data("data/tg2701.tsp", p, &n, prec, &m);
 
-    max_i = 100;
+    max_i = 3000;
     solve(p, n, tour, m, prec);
 
     exit(EXIT_SUCCESS);

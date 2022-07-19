@@ -7,6 +7,8 @@
 #include <string.h>
 #include <time.h>
 
+// #include "utils.h"
+
 #define MAX_N (int)1e4  // 点の数の最大値
 #define INF (int)1e9    // 無限大の定義
 #define EPSILON 1e-8    //ε 小さい正の値
@@ -122,6 +124,12 @@ void delete (int tour[], int *len, int k) {
     (*len)--;
 }
 
+void reverse(int arr[], int start, int end) {
+    for (int i = 0; i < (end - start + 1) / 2; ++i) {
+        swap(&arr[start + i], &arr[end - i]);
+    }
+}
+
 void show_array(int a[], int len) {
     int i;
     printf("[ ");
@@ -204,12 +212,14 @@ void cheapest_heuristic_random(point p[], int prec[], int tour[], int number_pre
     initialize(prec, number_prec);
     int i, j, id_points[MAX_N], len_tour;
 
+    // create an initial tour containing PRECEDENCE CONSTRAINTS points
     for (i = 0; i < number_prec; ++i) {
         tour[i] = prec[i];
     }
     tour[number_prec] = tour[0];
     len_tour = number_prec + 1;
 
+    // save points that are not part of PRECEDENCE CONSTRAINTS to id_points
     j = 0;
     for (i = 0; i < size_tour; ++i) {
         if (flags[i] == 1) continue;
@@ -217,8 +227,10 @@ void cheapest_heuristic_random(point p[], int prec[], int tour[], int number_pre
     }
     int size_id_points = size_tour - number_prec;
 
+    // shuffling array id_points
     shuffle(id_points, size_id_points, sizeof(int));
 
+    // insert each point in the id_points array into the tour at the position with the least change in distance
     for (i = 0; i < size_id_points; ++i) {
         double best_cost = INF;
         int best_pos = -1;
@@ -229,9 +241,11 @@ void cheapest_heuristic_random(point p[], int prec[], int tour[], int number_pre
                 best_pos = j;
             }
         }
+
         insert(tour, &len_tour, best_pos, id_points[i]);
     }
 
+    // check(tour, size_tour, prec, number_prec);
     printf("Distance tour cheapest_heuristic_random : %f\n", tour_length(p, size_tour, tour));
 }
 
@@ -240,9 +254,10 @@ void swap_points(int tour[], point p[], int size_tour) {
     tour[size_tour] = tour[0];
     int index_points[size_tour];
     int index_i, index_j;
-    double delta;
+    double delta, cur_distance;
     // show_array(tour, size_tour + 1);
     // printf("Distance tour start swap = %lf\n", tour_length(p, size_tour, tour));
+    cur_distance = tour_length(p, size_tour, tour);
 
     for (int i = 0; i < size_tour; ++i) {
         index_points[i] = i;
@@ -269,7 +284,7 @@ here:
             int cur_j = tour[index_j];
             int pos_j = tour[index_j + 1];
 
-            if (abs(index_i - index_j) == 1) {
+            if (abs(index_i - index_j) == 1) {  // case of 2 adjacent points
                 delta -= (dist(p[pre_i], p[cur_i]) + dist(p[cur_j], p[pos_j]));
                 // printf("delta: %f", delta);
                 delta += (dist(p[pre_i], p[cur_j]) + dist(p[cur_i], p[pos_j]));
@@ -286,11 +301,11 @@ here:
             // printf("swap: %d <-> %d : ", cur_i, cur_j);
             // printf("delta: %f\n", delta);
 
-            if (delta < -EPSILON) {
+            if (delta < -EPSILON) {  // if there is an improvement in the distance for the tour
                 swap(&tour[index_i], &tour[index_j]);
                 change = 1;
-                double cur_distance = tour_length(p, size_tour, tour);
-                printf("Swap changed = %lf\n", cur_distance);
+                // cur_distance = tour_length(p, size_tour, tour);
+                // printf("Swap changed = %lf\n", cur_distance);
                 // if ((min_distance - cur_distance) > EPSILON) {
                 //     min_distance = cur_distance;
                 //     write_tour_data(tourFileName, size_tour, tour);
@@ -299,6 +314,11 @@ here:
                 return;
             }
         }
+    }
+
+    double distance = tour_length(p, size_tour, tour);
+    if (distance + EPSILON < cur_distance) {
+        printf("Swap changed = %lf\n", distance);
     }
 }
 
@@ -310,6 +330,7 @@ void relocate(int tour[], point p[], int size_tour) {
     double delta, cur_distance;
     // show_array(tour, size_tour + 1);
     // printf("Distance tour start swap = %lf\n", tour_length(p, size_tour, tour));
+    cur_distance = tour_length(p, size_tour, tour);
 
     for (int i = 0; i < size_tour; ++i) {
         index_points[i] = i;
@@ -317,15 +338,18 @@ void relocate(int tour[], point p[], int size_tour) {
 
 here:
     shuffle(index_points, size_tour, sizeof(int));
+    // printf("Shuffle\n");
 
     for (int i = 0; i < size_tour; ++i) {
         index_i = index_points[i];
+        // printf("index i: %d\n", index_i);
         if (index_i == 0) continue;
         if (flags[tour[index_i]]) continue;
 
         for (int j = 0; j < size_tour; ++j) {
             index_j = index_points[j];
-            if (index_j == index_i || index_j == (index_i - 1)) continue;
+            if (index_j == index_i || index_j == (index_i - 1)) continue;  // The new location and the old location are the same
+            // printf("index j: %d\n", index_j);
 
             delta = 0.0;
             int pre_i = tour[index_i - 1];
@@ -337,17 +361,78 @@ here:
             delta = -dist(p[pre_i], p[cur_i]) - dist(p[cur_i], p[pos_i]) + dist(p[pre_i], p[pos_i]);
             delta += -dist(p[cur_j], p[pos_j]) + dist(p[cur_j], p[cur_i]) + dist(p[cur_i], p[pos_j]);
 
-            if (delta < -EPSILON) {
+            // printf("delta:%lf\n", delta);
+
+            if (delta < -EPSILON) {  // if there is an improvement in the distance for the tour
                 // printf("%d -> after %d - Delta: %lf\n", cur_i, cur_j, delta);
                 int len = size_tour + 1;
                 delete (tour, &len, index_i);
                 if (index_i < index_j) index_j--;
                 insert(tour, &len, index_j + 1, cur_i);
                 change = 1;
-                cur_distance = tour_length(p, size_tour, tour);
-                printf("Relocate changed = %lf\n", cur_distance);
+                // cur_distance = tour_length(p, size_tour, tour);
+                // printf("Relocate changed = %lf\n", cur_distance);
                 // show_array(tour, size_tour + 1);
 
+                goto here;
+                return;
+            }
+        }
+    }
+    double distance = tour_length(p, size_tour, tour);
+    if (distance + EPSILON < cur_distance) {
+        printf("Relocate changed = %lf\n", distance);
+    }
+    // if ((min_distance - cur_distance) > EPSILON) {
+    //     min_distance = cur_distance;
+    //     write_tour_data(tourFileName, size_tour, tour);
+    // }
+}
+
+void TwoOpt(point p[], int size_tour, int tour[]) {
+    tour[size_tour] = tour[0];
+    int index_points[size_tour];
+    int index_i, index_j, count_pre;
+    double delta, cur_distance;
+    // show_array(tour, size_tour + 1);
+    // printf("Distance tour start Two-opt = %lf\n", tour_length(p, size_tour, tour));
+    cur_distance = tour_length(p, size_tour, tour);
+
+    for (int i = 0; i < size_tour; ++i) {
+        index_points[i] = i;
+    }
+
+here:
+    count_pre = 0;
+    shuffle(index_points, size_tour, sizeof(int));
+
+    for (int i = 0; i < size_tour; ++i) {
+        index_i = index_points[i];
+        if (index_i == 0) continue;
+        int pre_i = tour[index_i - 1];
+        int cur_i = tour[index_i];
+        count_pre = flags[cur_i];
+
+        for (index_j = index_i + 1; index_j < size_tour; ++index_j) {
+            int cur_j = tour[index_j];
+            int pos_j = tour[index_j + 1];
+            count_pre += flags[cur_j];
+            if (count_pre >= 2) break;
+
+            delta = 0;
+            delta -= (dist(p[pre_i], p[cur_i]) + dist(p[cur_j], p[pos_j]));
+            delta += (dist(p[pre_i], p[cur_j]) + dist(p[cur_i], p[pos_j]));
+
+            if (delta < -EPSILON) {  // if there is an improvement in the distance for the tour
+                reverse(tour, index_i, index_j);
+                change = 1;
+                // cur_distance = tour_length(p, size_tour, tour);
+
+                // printf("2-opt changed = %lf\n", cur_distance);
+                // if ((min_distance - cur_distance) > EPSILON) {
+                //     min_distance = cur_distance;
+                //     write_tour_data(tourFileName, size_tour, tour);
+                // }
                 goto here;
                 return;
             }
@@ -357,69 +442,9 @@ here:
     //     min_distance = cur_distance;
     //     write_tour_data(tourFileName, size_tour, tour);
     // }
-}
-
-void TwoOpt(point p[], int n, int tour[], int m, int prec[]) {
-    int a, b, c, d;
-    int i, j, k, l, g, h, r, z;
-    double cur_distance;
-
-here:
-    cur_distance = tour_length(p, n, tour);
-    int countPrec = 0, finish = 0;
-    double max_dist = 0;
-
-    while (max_dist != (-1) * INF) {
-        max_dist = (-1) * INF;
-
-        for (i = 0; i <= n - 3; i++) {
-            j = i + 1;
-            for (k = i + 2; k <= n - 1; k++) {
-                l = (k + 1) % n;
-                a = tour[i];
-                b = tour[j];
-                c = tour[k];
-                d = tour[l];
-                countPrec = -1;
-                finish = 0;
-
-                if (dist(p[a], p[b]) + dist(p[c], p[d]) > dist(p[a], p[c]) + dist(p[b], p[d]) && dist(p[a], p[b]) + dist(p[c], p[d]) - (dist(p[a], p[c]) + dist(p[b], p[d])) > max_dist) {
-                    for (int r = j; r <= k && finish == 0; r++) {
-                        for (int z = 0; z < m; z++) {
-                            if (tour[r] == prec[z] && countPrec <= 0) {
-                                // countPrec++;
-                                if (++countPrec == 1)
-                                    finish = 1;
-                            }
-                        }
-                    }
-
-                    if (finish == 0) {
-                        g = j;
-                        h = k;
-                        max_dist = dist(p[a], p[b]) + dist(p[c], p[d]) - (dist(p[a], p[c]) + dist(p[b], p[d]));
-                    }
-                }
-            }
-        }
-        while (g < h) {
-            SWAP(tour[g], tour[h]);
-            g++;
-            h--;
-        }
-    }
-
-    double distance_tour = tour_length(p, n, tour);
-    if ((cur_distance - distance_tour) > EPSILON) {
-        printf("Changed by Two-Opt = %lf\n", distance_tour);
-        cur_distance = distance_tour;
-        change++;
-        // if ((min_distance - cur_distance) > EPSILON) {
-        //     min_distance = cur_distance;
-        //     write_tour_data(tourFileName, n, tour);
-        // }
-        goto here;
-        return;
+    double distance = tour_length(p, size_tour, tour);
+    if (distance + EPSILON < cur_distance) {
+        printf("2-opt changed = %lf\n", distance);
     }
 }
 
@@ -475,6 +500,8 @@ here:
 
         double distance_tour = tour_length(p, n, tour);
         if ((cur_distance - distance_tour) > EPSILON) {
+            // check(tour, n, prec, m);
+
             printf("Changed by orOpt1 = %lf\n", distance_tour);
             cur_distance = distance_tour;
             change++;
@@ -493,6 +520,7 @@ void OrOpt2(struct point p[MAX_N], int n, int tour[MAX_N], int m, int prec[MAX_N
     int i0, i, i1, i2, j, j1, g, tmp, tmp1;
     double k1, k2, k3, k4, k5, k6, k7, k8, k9, k10;
     double cur_distance;
+
 here:
     cur_distance = tour_length(p, n, tour);
     int count = 1;
@@ -548,6 +576,8 @@ here:
 
         double distance_tour = tour_length(p, n, tour);
         if ((cur_distance - distance_tour) > EPSILON) {
+            // check(tour, n, prec, m);
+
             printf("Changed by orOpt2 = %lf\n", distance_tour);
             cur_distance = distance_tour;
             change++;
@@ -660,6 +690,8 @@ here:
 
         double distance_tour = tour_length(p, n, tour);
         if ((cur_distance - distance_tour) > EPSILON) {
+            // check(tour, n, prec, m);
+
             printf("Changed by orOpt3 = %lf\n", distance_tour);
             cur_distance = distance_tour;
             change++;
@@ -673,23 +705,45 @@ here:
     }
 }
 
+void call(int f_i, point p[], int tour[], int size_tour, int prec[], int number_prec) {
+    switch (f_i) {
+        case 0:
+            printf("2-Opt!\n");
+            TwoOpt(p, size_tour, tour);
+            break;
+        case 1:
+            printf("Swap!\n");
+            swap_points(tour, p, size_tour);
+            break;
+        case 2:
+            printf("Or-Opt1!\n");
+            OrOpt1(p, size_tour, tour, number_prec, prec);
+            break;
+        case 3:
+            printf("Or-Opt2!\n");
+            OrOpt2(p, size_tour, tour, number_prec, prec);
+            break;
+        case 4:
+            printf("Or-Opt3!\n");
+            OrOpt3(p, size_tour, tour, number_prec, prec);
+            break;
+        default:
+            printf("Relocate!\n");
+            relocate(tour, p, size_tour);
+            break;
+    }
+}
+
 // local minimum value search
 void local_search(point p[], int tour[], int size_tour, int prec[], int number_prec) {
     change = 1;
+    int choose[6] = {0, 1, 2, 3, 4, 5};
     while (change) {
-        printf("Relocate!\n");
-        relocate(tour, p, size_tour);
+        shuffle(choose, 6, sizeof(int));
         change = 0;
-        printf("Swap!\n");
-        swap_points(tour, p, size_tour);
-        printf("2-Opt!\n");
-        TwoOpt(p, size_tour, tour, number_prec, prec);
-        printf("Or-Opt1!\n");
-        OrOpt1(p, size_tour, tour, number_prec, prec);
-        printf("Or-Opt2!\n");
-        OrOpt2(p, size_tour, tour, number_prec, prec);
-        printf("Or-Opt3!\n");
-        OrOpt3(p, size_tour, tour, number_prec, prec);
+        for (int i = 0; i < 6; i++) {
+            call(choose[i], p, tour, size_tour, prec, number_prec);
+        }
     }
 }
 
@@ -702,7 +756,7 @@ void solve(point p[], int tour[], int size_tour, int prec[], int number_prec) {
     write_tour_data(tourFileName, size_tour, tour);
 
     best_distance = tour_length(p, size_tour, tour);
-    min_distance = best_distance;
+    // min_distance = best_distance;
 
     for (int iter = 0; iter < max_iter; ++iter) {
         printf("iter %d:----------------\n", iter);
@@ -710,17 +764,18 @@ void solve(point p[], int tour[], int size_tour, int prec[], int number_prec) {
             cheapest_heuristic_random(p, prec, tour, number_prec, size_tour);
 
         local_search(p, tour, size_tour, prec, number_prec);
+        // check(tour, size_tour, prec, number_prec);
 
         cur_distance = tour_length(p, size_tour, tour);
         if ((best_distance - cur_distance) > EPSILON) {
             printf("%d - Found improvement %.2lf\n", iter, cur_distance);
             best_distance = cur_distance;
-            min_distance = best_distance;
+            // min_distance = best_distance;
             write_tour_data(tourFileName, size_tour, tour);
         }
     }
 
-    printf("Min: %.2lf\n", min_distance);
+    printf("Min: %.2lf\n", best_distance);
     printf("Done Local Search!\n");
 }
 
@@ -731,24 +786,25 @@ int main(int argc, char *argv[]) {
     int tour[MAX_N];  // 巡回路を表現する配列
     int prec[MAX_N];  // 順序制約を表現する配列
     int i, j;
+    srand(0);
 
-    // if (argc < 2) {
-    //     fprintf(stderr, "Usage: %s <tsp_filename> (max_iter)\n", argv[0]);
-    //     exit(EXIT_FAILURE);
-    // }
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <tsp_filename> (max_iter)\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
 
     // ----------------------------------------------------------------
-    max_iter = 100;
-    if (argc >= 3) {
-        max_iter = atoi(argv[2]);
-    }
+    // if (argc >= 3) {
+    //     max_iter = 100;
+    //     max_iter = atoi(argv[2]);
+    // }
     //-----------------------------------------------------------------
 
     // 点の数と各点の座標を1番目のコマンドライン引数で指定されたファイルから読み込む
-    // read_tsp_data(argv[1], p, &n, prec, &m);
-    read_tsp_data("data/rd100.tsp", p, &n, prec, &m);
+    read_tsp_data(argv[1], p, &n, prec, &m);
 
     solve(p, tour, n, prec, m);
 
     exit(EXIT_SUCCESS);
+    return 0;
 }
