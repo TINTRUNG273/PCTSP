@@ -110,7 +110,7 @@ void insert(int tour[MAX_N], int* len, int k, int value) {
 
 // delete element at position k in array
 // 配列の位置kにある要素を削除する
-void delete (int tour[], int *len, int k) {
+void delete(int tour[], int *len, int k) {
     int i;
     if (k < 0 || k > *len) {
         printf("Error in delete: out of range\n");
@@ -1167,7 +1167,8 @@ int main(int argc, char *argv[]) {
   int tour[MAX_N];   // 巡回路を表現する配列
   int prec[MAX_N];   // 順序制約を表現する配列
   int i;
-
+  srand(0);
+     
   if(argc != 2) {
     fprintf(stderr,"Usage: %s <tsp_filename>\n",argv[0]);
     exit(EXIT_FAILURE);
